@@ -12,8 +12,8 @@ class Student:
             lecturer.grades.append(grade)
 
     def get_average_grade(self):
-        total_grades = sum(sum(lecturer.grades, []) for lecturer in self.lecturers.values())
-        total_courses = sum(len(lecturer.grades) for lecturer in self.lecturers.values())
+        total_grades = sum(sum(course_grades, []) for course_grades in self.grades.values())
+        total_courses = sum(len(course_grades) for course_grades in self.grades.values())
         return total_grades / total_courses if total_courses > 0 else 0
 
     def __str__(self):
@@ -39,15 +39,14 @@ class Mentor:
 
 
 class Lecturer(Mentor):
-    def __init__(self, name, surname, course):
+    def __init__(self, name, surname):
         super().__init__(name, surname)
-        self.course = course
         self.grades = []
 
     def get_average_grade(self):
         total_grades = sum(self.grades)
-        total_courses = len(self.grades)
-        return total_grades / total_courses if total_courses > 0 else 0
+        total_ratings = len(self.grades)
+        return total_grades / total_ratings if total_ratings > 0 else 0
 
     def __str__(self):
         average_grade = self.get_average_grade()
@@ -56,51 +55,59 @@ class Lecturer(Mentor):
                f"Средняя оценка за лекции: {average_grade}"
 
 
-class Reviewer(Mentor):
-    def rate_hw(self, student, course, grade):
-        if isinstance(student, Student) and course in self.courses_attached and course in student.courses_in_progress:
-            if course in student.grades:
-                student.grades[course].append(grade)
+def calculate_average_student_grade(students, course):
+    total_grades = 0
+    total_students = 0
+    for student in students:
+        if course in student.courses_in_progress:
+            course_grades = student.grades.get(course, [])
+            total_grades += sum(course_grades)
+            total_students += len(course_grades)
+    return total_grades / total_students if total_students > 0 else 0
 
-    def __str__(self):
-        return f"Имя: {self.name}\n" \
-               f"Фамилия: {self.surname}"
+
+def calculate_average_lecturer_grade(lecturers, course):
+    total_grades = 0
+    total_lecturers = 0
+    for lecturer in lecturers:
+        if course in lecturer.courses_attached:
+            total_grades += sum(lecturer.grades)
+            total_lecturers += len(lecturer.grades)
+    return total_grades / total_lecturers if total_lecturers > 0 else 0
 
 
-# Пример использования и сравнения:
- lecturer1 = Lecturer("John", "Doe", "Python")
- lecturer2 = Lecturer("Jane", "Smith", "JavaScript")
- student1 = Student("Alice", "Brown", "Female")
- student2 = Student("Bob", "Johnson", "Male")
- reviewer1 = Reviewer("John", "Smith")
- reviewer2 = Reviewer("Jane", "Doe")
+# Создаем экземпляры классов
+student1 = Student("Иван", "Иванов", "мужской")
+student2 = Student("Анна", "Петрова", "женский")
 
- reviewer1.courses_attached.append("Python")
- reviewer2.courses_attached.append("JavaScript")
- student1.courses_in_progress.append("Python")
- student2.courses_in_progress.append("JavaScript")
- lecturer1.grades = [9.5, 8.8, 9.2]
- lecturer2.grades = [9.7, 9.9, 8.5]
+lecturer1 = Lecturer("Дмитрий", "Смирнов")
+lecturer2 = Lecturer("Елена", "Кузнецова")
 
- print(reviewer1)
- print(reviewer2)
- print(lecturer1)
- print(lecturer2)
- print(student1)
- print(student2)
+# Вызываем методы
+student1.courses_in_progress.append("Математика")
+student1.finished_courses.append("Физика")
+student2.courses_in_progress.append("Физика")
 
- # Сравнение лекторов
- if lecturer1 > lecturer2:
-     print(f"{lecturer1.surname} лучше, чем {lecturer2.surname}")
- elif lecturer1 < lecturer2:
-     print(f"{lecturer2.surname} лучше, чем {lecturer1.surname}")
- else:
-     print("Оценки лекторов равны")
+student1.rate_lecturer(lecturer1, "Математика", 5)
+student2.rate_lecturer(lecturer1, "Физика", 4)
+student1.rate_lecturer(lecturer2, "Математика", 3)
 
- # Сравнение студентов
- if student1 > student2:
-     print(f"{student1.surname} лучше, чем {student2.surname}")
- elif student1 < student2:
-     print(f"{student2.surname} лучше, чем {student1.surname}")
- else:
-     print("Оценки студентов равны")
+print(student1)
+print()
+print(student2)
+
+print(lecturer1)
+print()
+print(lecturer2)
+
+# Подсчет средней оценки по домашним заданиям для определенного курса
+students = [student1, student2]
+course = "Математика"
+average_grade = calculate_average_student_grade(students, course)
+print(f"\nСредняя оценка за домашние задания по курсу {course}: {average_grade}")
+
+# Подсчет средней оценки за лекции для определенного курса
+lecturers = [lecturer1, lecturer2]
+course = "Математика"
+average_grade = calculate_average_lecturer_grade(lecturers, course)
+print(f"\nСредняя оценка за лекции по курсу {course}: {average_grade}")
